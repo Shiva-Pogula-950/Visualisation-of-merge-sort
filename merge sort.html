@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced Merge Sort Visualization</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        /* Main container */
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header styles */
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Control panel styles */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 500;
+            color: #5f6368;
+        }
+
+        /* Button styles */
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #1a73e8;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            height: 40px;
+        }
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Range input styles */
+        input[type="range"] {
+            width: 100%;
+        }
+
+        /* Visualization container styles */
+        .visualization-container {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .array-container {
+            flex: 2;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 300px;
+            gap: 2px;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .merge-tree {
+            flex: 1;
+            height: 300px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            overflow: auto;
+        }
+
+        /* Array bar styles */
+        .array-bar {
+            background-color: #4285f4;
+            transition: height 0.3s ease, background-color 0.3s ease;
+        }
+
+        .array-bar.comparing {
+            background-color: #fbbc05;
+        }
+
+        .array-bar.sorted {
+            background-color: #34a853;
+        }
+
+        /* Statistics panel styles */
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.5rem;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-item h3 {
+            color: #1a73e8;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Legend styles */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        /* Tree node styles */
+        .tree-node {
+            padding: 0.5rem;
+            margin: 0.25rem;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced Merge Sort Visualization</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="arraySize">Array Size:</label>
+                <input type="range" id="arraySize" min="10" max="100" value="30">
+                <span id="arraySizeValue">30 elements</span>
+            </div>
+            <div class="control-group">
+                <label for="speed">Animation Speed:</label>
+                <input type="range" id="speed" min="1" max="200" value="100">
+                <span id="speedValue">100ms</span>
+            </div>
+            <div class="control-group">
+                <button onclick="generateNewArray()">Generate New Array</button>
+            </div>
+            <div class="control-group">
+                <button onclick="startSort()">Start Sorting</button>
+            </div>
+            <div class="control-group">
+                <button onclick="resetArray()">Reset</button>
+            </div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-item">
+                <h3>Comparisons</h3>
+                <span id="comparisons">0</span>
+            </div>
+            <div class="stat-item">
+                <h3>Array Accesses</h3>
+                <span id="arrayAccesses">0</span>
+            </div>
+            <div class="stat-item">
+                <h3>Time Elapsed</h3>
+                <span id="timeElapsed">0.00s</span>
+            </div>
+            <div class="stat-item">
+                <h3>Current Phase</h3>
+                <span id="currentPhase">Ready</span>
+            </div>
+        </div>
+
+        <div class="visualization-container">
+            <div class="array-container" id="arrayContainer"></div>
+            <div class="merge-tree" id="mergeTree">
+                <h3>Merge Process Tree</h3>
+                <div id="treeContent"></div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #4285f4;"></div>
+                <span>Unsorted</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #fbbc05;"></div>
+                <span>Comparing</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #34a853;"></div>
+                <span>Sorted</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let array = [];
+        let arrayBars = [];
+        let isSorting = false;
+        let comparisons = 0;
+        let arrayAccesses = 0;
+        let startTime = 0;
+        let timerInterval;
+
+        // Initialize the visualization
+        function init() {
+            setupEventListeners();
+            generateNewArray();
+        }
+
+        // Setup event listeners for controls
+        function setupEventListeners() {
+            document.getElementById('arraySize').addEventListener('input', function(e) {
+                document.getElementById('arraySizeValue').textContent = `${e.target.value} elements`;
+                if (!isSorting) generateNewArray();
+            });
+
+            document.getElementById('speed').addEventListener('input', function(e) {
+                document.getElementById('speedValue').textContent = `${e.target.value}ms`;
+            });
+        }
+
+        // Generate a new random array
+        function generateNewArray() {
+            const size = parseInt(document.getElementById('arraySize').value);
+            array = [];
+            for (let i = 0; i < size; i++) {
+                array.push(Math.floor(Math.random() * 250) + 10);
+            }
+            resetStats();
+            displayArray();
+            updateCurrentPhase("Ready to sort");
+        }
+
+        // Reset statistics
+        function resetStats() {
+            comparisons = 0;
+            arrayAccesses = 0;
+            updateStats();
+            clearInterval(timerInterval);
+            document.getElementById('timeElapsed').textContent = '0.00s';
+        }
+
+        // Update statistics display
+        function updateStats() {
+            document.getElementById('comparisons').textContent = comparisons;
+            document.getElementById('arrayAccesses').textContent = arrayAccesses;
+        }
+
+        // Update current phase display
+        function updateCurrentPhase(phase) {
+            document.getElementById('currentPhase').textContent = phase;
+        }
+
+        // Display the array as bars
+        function displayArray() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            arrayBars = [];
+            
+            const barWidth = Math.floor((container.clientWidth - (array.length * 2)) / array.length);
+            
+            array.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'array-bar';
+                bar.style.height = `${value}px`;
+                bar.style.width = `${barWidth}px`;
+                container.appendChild(bar);
+                arrayBars.push(bar);
+            });
+        }
+
+        // Reset the array to its original state
+        function resetArray() {
+            if (isSorting) return;
+            arrayBars.forEach(bar => {
+                bar.className = 'array-bar';
+            });
+            resetStats();
+            displayArray();
+            updateCurrentPhase("Ready to sort");
+            document.getElementById('treeContent').innerHTML = '';
+        }
+
+        // Start the sorting process
+        async function startSort() {
+            if (isSorting) return;
+            isSorting = true;
+            resetStats();
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 10);
+            updateCurrentPhase("Sorting in progress...");
+            await mergeSort(array, 0, array.length - 1);
+            clearInterval(timerInterval);
+            updateCurrentPhase("Sorting completed!");
+            isSorting = false;
+        }
+
+        // Update timer display
+        function updateTimer() {
+            const elapsed = (Date.now() - startTime) / 1000;
+            document.getElementById('timeElapsed').textContent = elapsed.toFixed(2) + 's';
+        }
+
+        // Merge sort implementation
+        async function mergeSort(arr, left, right) {
+            if (left >= right) return;
+
+            const mid = Math.floor((left + right) / 2);
+            updateTreeView(left, mid, right, 'Splitting');
+            await mergeSort(arr, left, mid);
+            await mergeSort(arr, mid + 1, right);
+            await merge(arr, left, mid, right);
+            updateTreeView(left, mid, right, 'Merged');
+        }
+
+        // Update the merge process tree view
+        function updateTreeView(left, mid, right, action) {
+            const treeContent = document.getElementById('treeContent');
+            const node = document.createElement('div');
+            node.className = 'tree-node';
+            node.textContent = `${action}: [${left}...${right}]`;
+            treeContent.appendChild(node);
+            treeContent.scrollTop = treeContent.scrollHeight;
+        }
+
+        // Merge function with visualization
+        async function merge(arr, left, mid, right) {
+            const speed = parseInt(document.getElementById('speed').value);
+            const n1 = mid - left + 1;
+            const n2 = right - mid;
+            
+            const L = arr.slice(left, mid + 1);
+            const R = arr.slice(mid + 1, right + 1);
+            arrayAccesses += n1 + n2;
+            
+            let i = 0, j = 0, k = left;
+            
+            updateCurrentPhase(`Merging [${left}...${mid}] with [${mid+1}...${right}]`);
+            
+            while (i < n1 && j < n2) {
+                arrayBars[left + i].classList.add('comparing');
+                arrayBars[mid + 1 + j].classList.add('comparing');
+                await new Promise(resolve => setTimeout(resolve, speed));
+                
+                comparisons++;
+                arrayAccesses += 2;
+                
+                if (L[i] <= R[j]) {
+                    arr[k] = L[i];
+                    arrayBars[k].style.height = `${L[i]}px`;
+                    arrayBars[k].classList.add('sorted');
+                    i++;
+                } else {
+                    arr[k] = R[j];
+                    arrayBars[k].style.height = `${R[j]}px`;
+                    arrayBars[k].classList.add('sorted');
+                    j++;
+                }
+                
+                arrayAccesses++;
+                updateStats();
+                
+                arrayBars[left + i - 1]?.classList.remove('comparing');
+                arrayBars[mid + 1 + j - 1]?.classList.remove('comparing');
+                k++;
+                
+                await new Promise(resolve => setTimeout(resolve, speed));
+            }
+            
+            while (i < n1) {
+                arr[k] = L[i];
+                arrayBars[k].style.height = `${L[i]}px`;
+                arrayBars[k].classList.add('sorted');
+                arrayAccesses += 2;
+                updateStats();
+                i++;
+                k++;
+                await new Promise(resolve => setTimeout(resolve, speed));
+            }
+            
+            while (j < n2) {
+                arr[k] = R[j];
+                arrayBars[k].style.height = `${R[j]}px`;
+                arrayBars[k].classList.add('sorted');
+                arrayAccesses += 2;
+                updateStats();
+                j++;
+                k++;
+                await new Promise(resolve => setTimeout(resolve, speed));
+            }
+        }
+
+        // Initialize on window load
+        window.onload = init;
+    </script>
+</body>
+</html>
